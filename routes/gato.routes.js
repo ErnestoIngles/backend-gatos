@@ -13,7 +13,7 @@ const upload = multer({
 
 router.post("/gato", upload.single("imagen"), registrarGato);
 
-router.post(
+router.put(
   "/gato/:id",
   upload.single("imagen"),
   actualizarGato
