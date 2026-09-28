@@ -7,11 +7,11 @@ const app = express();
 
 // Middlewares
 app.use(cors());  //Permite peticiones desde cualquier origen
-app.use(climaRoutes);
 app.use(express.json());
 
 // Rutas
 app.use(gatoRoutes);
+app.use(climaRoutes);
 
 // 404
 app.use((req, res) => {
