@@ -1,26 +1,54 @@
 import express from "express";
+
 import multer from "multer";
-import { registrarGato, obtenerGatos, actualizarGato, eliminarGato } from '../controllers/gato.controller.js';
+
+import {
+    registrarGato,
+    obtenerGatos,
+    actualizarGato,
+    eliminarGato,
+    buscarGatos
+} from "../controllers/gato.controller.js";
 
 const router = express.Router();
 
 const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 5 * 1024 * 1024,
-  },
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024,
+    },
 });
 
-router.post("/gato", upload.single("imagen"), registrarGato);
+// Registrar un gato
+router.post(
+    "/gato",
+    upload.single("imagen"),
+    registrarGato
+);
 
+// Actualizar un gato
 router.put(
-  "/gato/:id",
-  upload.single("imagen"),
-  actualizarGato
-)
+    "/gato/:id",
+    upload.single("imagen"),
+    actualizarGato
+);
 
-router.get('/gatos', obtenerGatos);
+// Obtener todos los gatos
+router.get(
+    "/gatos",
+    obtenerGatos
+);
 
-router.delete("/gato/:id", eliminarGato);
+// Buscar gatos
+router.get(
+    "/gatos/buscar",
+    buscarGatos
+);
+
+// Eliminar un gato
+router.delete(
+    "/gato/:id",
+    eliminarGato
+);
 
 export default router;
