@@ -9,6 +9,7 @@ import {
     eliminarGato,
     buscarGatos
 } from "../controllers/gato.controller.js";
+import { capturarInfoSolicitud } from "../middlewares/auditoria.js";
 
 const router = express.Router();
 
@@ -25,6 +26,8 @@ router.post(
     upload.single("imagen"),
     registrarGato
 );
+
+router.use(capturarInfoSolicitud);
 
 // Actualizar un gato
 router.put(

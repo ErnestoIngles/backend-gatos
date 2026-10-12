@@ -1,222 +1,282 @@
 import db from "../firebase.js";
 import supabase from "../supabase.js";
 
-export const registrarGato = async (req, res) => {
-    try {
+export const registrarGato = async ( req, res ) => {
+    try
+    {
         const { nombre, edad, peso, raza } = req.body || {};
         const imagen = req.file;
 
-        if (!nombre || !edad || !peso || !raza) {
-            return res.status(400).json({
+        if ( !nombre || !edad || !peso || !raza )
+        {
+            return res.status( 400 ).json( {
                 mensaje: "Todos los campos son obligatorios: nombre, edad, peso y raza.",
-            });
+            } );
         }
 
-        if (!imagen) {
-            return res.status(400).json({
+        if ( !imagen )
+        {
+            return res.status( 400 ).json( {
                 mensaje: "La imagen del gato es obligatoria.",
-            });
+            } );
         }
 
-        if (!imagen.mimetype.startsWith("image/")) {
-            return res.status(400).json({
+        if ( !imagen.mimetype.startsWith( "image/" ) )
+        {
+            return res.status( 400 ).json( {
                 mensaje: "El archivo debe ser una imagen.",
-            });
+            } );
         }
 
         const extension = imagen.originalname
-            .split(".")
+            .split( "." )
             .pop()
             .toLowerCase();
 
-        const nombreArchivo = `gato-${Date.now()}-${Math.random()
-            .toString(36)
-            .substring(2)}.${extension}`;
+        const nombreArchivo = `gato-${ Date.now() }-${ Math.random()
+            .toString( 36 )
+            .substring( 2 ) }.${ extension }`;
 
-        const rutaImagen = `gatos/${nombreArchivo}`;
+        const rutaImagen = `gatos/${ nombreArchivo }`;
 
         const { error: uploadError } = await supabase.storage
-            .from("imagenes_gatos")
-            .upload(rutaImagen, imagen.buffer, {
+            .from( "imagenes_gatos" )
+            .upload( rutaImagen, imagen.buffer, {
                 contentType: imagen.mimetype,
                 upsert: false,
-            });
+            } );
 
-        if (uploadError) {
-            console.error("Error al subir imagen:", uploadError);
-            return res.status(500).json({
+        if ( uploadError )
+        {
+            console.error( "Error al subir imagen:", uploadError );
+            return res.status( 500 ).json( {
                 mensaje: "Error al subir la imagen a Supabase.",
                 error: uploadError.message,
-            });
+            } );
         }
 
         const { data: publicUrlData } = supabase.storage
-            .from("imagenes_gatos")
-            .getPublicUrl(rutaImagen);
+            .from( "imagenes_gatos" )
+            .getPublicUrl( rutaImagen );
 
         const imagenUrl = publicUrlData.publicUrl;
 
-        const docRef = await db.collection("gatos").add({
+        const docRef = await db.collection( "gatos" ).add( {
             nombre,
-            edad: Number(edad),
-            peso: Number(peso),
+            edad: Number( edad ),
+            peso: Number( peso ),
             raza,
             imagenUrl,
             fecha: new Date().toISOString(),
-        });
+        } );
 
-        res.status(201).json({
-            mensaje: `¡Gato registrado con éxito! ID: ${docRef.id} | Nombre: ${nombre} | Edad: ${edad} años | Peso: ${peso} kg | Raza: ${raza}`,
+        await guardarAuditoria( {
+            accion: "crear",
+            gatoId: docRef.id,
+            valoresAnteriores: null,
+            valoresNuevos: {
+                nombre,
+                edad: Number( edad ),
+                peso: Number( peso ),
+                raza,
+                imagenUrl,
+            },
+            req,
+        } );
+
+        res.status( 201 ).json( {
+            mensaje: `¡Gato registrado con éxito! ID: ${ docRef.id } | Nombre: ${ nombre } | Edad: ${ edad } años | Peso: ${ peso } kg | Raza: ${ raza }`,
             id: docRef.id,
             imagenUrl,
-        });
-    } catch (error) {
-        console.error("Error:", error);
-        res.status(500).json({
+        } );
+    } catch ( error )
+    {
+        console.error( "Error:", error );
+        res.status( 500 ).json( {
             mensaje: "Error al registrar el gato.",
             error: error.message,
-        });
+        } );
     }
 };
 
 // Obtener todos los gatos
-export const obtenerGatos = async (req, res) => {
-    try {
+export const obtenerGatos = async ( req, res ) => {
+    try
+    {
         const snapshot = await db
-            .collection("gatos")
-            .orderBy("fecha", "desc")
+            .collection( "gatos" )
+            .orderBy( "fecha", "desc" )
             .get();
 
-        const gatos = snapshot.docs.map((doc) => ({
+        const gatos = snapshot.docs.map( ( doc ) => ( {
             id: doc.id,
             ...doc.data(),
-        }));
+        } ) );
 
-        res.status(200).json({
+        res.status( 200 ).json( {
             mensaje: "Gatos obtenidos correctamente.",
             gatos,
-        });
-    } catch (error) {
-        console.error("Error al obtener gatos:", error);
-        res.status(500).json({
+        } );
+    } catch ( error )
+    {
+        console.error( "Error al obtener gatos:", error );
+        res.status( 500 ).json( {
             mensaje: "Error al obtener los gatos.",
             error: error.message,
-        });
+        } );
     }
 };
 
 // Actualizar gato
-export const actualizarGato = async (req, res) => {
-    try {
+export const actualizarGato = async ( req, res ) => {
+    try
+    {
+        const datosAnteriores = doc.data();
         const { id } = req.params;
         const { nombre, edad, peso, raza } = req.body || {};
         const imagen = req.file;
 
-        if (!nombre || !edad || !peso || !raza) {
-            return res.status(400).json({
+        if ( !nombre || !edad || !peso || !raza )
+        {
+            return res.status( 400 ).json( {
                 mensaje: "Todos los campos son obligatorios: nombre, edad, peso y raza.",
-            });
+            } );
         }
 
-        const docRef = db.collection("gatos").doc(id);
+        const docRef = db.collection( "gatos" ).doc( id );
         const doc = await docRef.get();
 
-        if (!doc.exists) {
-            return res.status(404).json({
+        if ( !doc.exists )
+        {
+            return res.status( 404 ).json( {
                 mensaje: "Gato no encontrado.",
-            });
+            } );
         }
 
         let imagenUrl = doc.data().imagenUrl;
 
-        if (imagen) {
-            if (!imagen.mimetype.startsWith("image/")) {
-                return res.status(400).json({
+        if ( imagen )
+        {
+            if ( !imagen.mimetype.startsWith( "image/" ) )
+            {
+                return res.status( 400 ).json( {
                     mensaje: "El archivo debe ser una imagen.",
-                });
+                } );
             }
 
             const extension = imagen.originalname
-                .split(".")
+                .split( "." )
                 .pop()
                 .toLowerCase();
 
-            const nombreArchivo = `gato-${Date.now()}-${Math.random()
-                .toString(36)
-                .substring(2)}.${extension}`;
+            const nombreArchivo = `gato-${ Date.now() }-${ Math.random()
+                .toString( 36 )
+                .substring( 2 ) }.${ extension }`;
 
-            const rutaImagen = `gatos/${nombreArchivo}`;
+            const rutaImagen = `gatos/${ nombreArchivo }`;
 
             const { error: uploadError } = await supabase.storage
-                .from("imagenes_gatos")
-                .upload(rutaImagen, imagen.buffer, {
+                .from( "imagenes_gatos" )
+                .upload( rutaImagen, imagen.buffer, {
                     contentType: imagen.mimetype,
                     upsert: false,
-                });
+                } );
 
-            if (uploadError) {
-                console.error("Error al subir imagen:", uploadError);
-                return res.status(500).json({
+            if ( uploadError )
+            {
+                console.error( "Error al subir imagen:", uploadError );
+                return res.status( 500 ).json( {
                     mensaje: "Error al subir la imagen a Supabase.",
                     error: uploadError.message,
-                });
+                } );
             }
 
             const { data: publicUrlData } = supabase.storage
-                .from("imagenes_gatos")
-                .getPublicUrl(rutaImagen);
+                .from( "imagenes_gatos" )
+                .getPublicUrl( rutaImagen );
 
             imagenUrl = publicUrlData.publicUrl;
         }
 
-        await docRef.update({
+        const valoresNuevos = {
             nombre,
-            edad: Number(edad),
-            peso: Number(peso),
+            edad: Number( edad ),
+            peso: Number( peso ),
             raza,
             imagenUrl,
-        });
+        };
 
-        res.status(200).json({
-            mensaje: `¡Gato actualizado con éxito! ID: ${id} | Nombre: ${nombre}`,
+        await docRef.update( {
+            nombre,
+            edad: Number( edad ),
+            peso: Number( peso ),
+            raza,
+            imagenUrl,
+        } );
+
+        await docRef.update( valoresNuevos );
+
+        await guardarAuditoria( {
+            accion: "actualizar",
+            gatoId: id,
+            valoresAnteriores: {
+                nombre: datosAnteriores.nombre,
+                edad: datosAnteriores.edad,
+                peso: datosAnteriores.peso,
+                raza: datosAnteriores.raza,
+                imagenUrl: datosAnteriores.imagenUrl,
+            },
+            valoresNuevos,
+            req,
+        } );
+
+        res.status( 200 ).json( {
+            mensaje: `¡Gato actualizado con éxito! ID: ${ id } | Nombre: ${ nombre }`,
             id,
             imagenUrl,
-        });
-    } catch (error) {
-        console.error("Error al actualizar gato:", error);
-        res.status(500).json({
+        } );
+    } catch ( error )
+    {
+        console.error( "Error al actualizar gato:", error );
+        res.status( 500 ).json( {
             mensaje: "Error al actualizar el gato.",
             error: error.message,
-        });
+        } );
     }
 };
 
 // Eliminar gato
-export const eliminarGato = async (req, res) => {
-    try {
+export const eliminarGato = async ( req, res ) => {
+    try
+    {
         const { id } = req.params;
 
-        const docRef = db.collection("gatos").doc(id);
+        const docRef = db.collection( "gatos" ).doc( id );
         const doc = await docRef.get();
 
-        if (!doc.exists) {
-            return res.status(404).json({
+        if ( !doc.exists )
+        {
+            return res.status( 404 ).json( {
                 mensaje: "Gato no encontrado.",
-            });
+            } );
         }
 
         const imagenUrl = doc.data().imagenUrl;
 
-        if (imagenUrl) {
-            try {
-                const ruta = imagenUrl.split("/imagenes_gatos/")[1];
+        if ( imagenUrl )
+        {
+            try
+            {
+                const ruta = imagenUrl.split( "/imagenes_gatos/" )[ 1 ];
 
-                if (ruta) {
+                if ( ruta )
+                {
                     await supabase.storage
-                        .from("imagenes_gatos")
-                        .remove([ruta]);
+                        .from( "imagenes_gatos" )
+                        .remove( [ ruta ] );
                 }
-            } catch (err) {
+            } catch ( err )
+            {
                 console.error(
                     "No se pudo eliminar la imagen de Supabase:",
                     err.message
@@ -226,69 +286,114 @@ export const eliminarGato = async (req, res) => {
 
         await docRef.delete();
 
-        res.status(200).json({
-            mensaje: `Gato eliminado con éxito. ID: ${id}`,
-        });
-    } catch (error) {
-        console.error("Error al eliminar gato:", error);
-        res.status(500).json({
+        await guardarAuditoria( {
+            accion: "eliminar",
+            gatoId: id,
+            valoresAnteriores: {
+                nombre: datosAnteriores.nombre,
+                edad: datosAnteriores.edad,
+                peso: datosAnteriores.peso,
+                raza: datosAnteriores.raza,
+                imagenUrl: datosAnteriores.imagenUrl,
+            },
+            valoresNuevos: null,
+            req,
+        } );
+
+        res.status( 200 ).json( {
+            mensaje: `Gato eliminado con éxito. ID: ${ id }`,
+        } );
+    } catch ( error )
+    {
+        console.error( "Error al eliminar gato:", error );
+        res.status( 500 ).json( {
             mensaje: "Error al eliminar el gato.",
             error: error.message,
-        });
+        } );
     }
 };
 
 // Buscar gatos
-export const buscarGatos = async (req, res) => {
-    try {
+export const buscarGatos = async ( req, res ) => {
+    try
+    {
         const { q } = req.query;
 
-        if (!q || q.trim() === "") {
-            return res.status(400).json({
+        if ( !q || q.trim() === "" )
+        {
+            return res.status( 400 ).json( {
                 mensaje: "Debes enviar un término de búsqueda (parámetro q).",
-            });
+            } );
         }
 
         const termino = q.trim().toLowerCase();
 
         const snapshot = await db
-            .collection("gatos")
-            .orderBy("fecha", "desc")
+            .collection( "gatos" )
+            .orderBy( "fecha", "desc" )
             .get();
 
         const gatos = snapshot.docs
-            .map((doc) => ({
+            .map( ( doc ) => ( {
                 id: doc.id,
                 ...doc.data(),
-            }))
-            .filter((gato) => {
-                const nombre = String(gato.nombre || "").toLowerCase();
-                const raza = String(gato.raza || "").toLowerCase();
-                const edad = String(gato.edad || "");
-                const peso = String(gato.peso || "");
+            } ) )
+            .filter( ( gato ) => {
+                const nombre = String( gato.nombre || "" ).toLowerCase();
+                const raza = String( gato.raza || "" ).toLowerCase();
+                const edad = String( gato.edad || "" );
+                const peso = String( gato.peso || "" );
 
                 const fecha = gato.fecha
-                    ? new Date(gato.fecha)
-                        .toLocaleDateString("es-ES")
+                    ? new Date( gato.fecha )
+                        .toLocaleDateString( "es-ES" )
                         .toLowerCase()
                     : "";
 
                 return (
-                    nombre.includes(termino) ||
-                    raza.includes(termino) ||
-                    edad.includes(termino) ||
-                    peso.includes(termino) ||
-                    fecha.includes(termino)
+                    nombre.includes( termino ) ||
+                    raza.includes( termino ) ||
+                    edad.includes( termino ) ||
+                    peso.includes( termino ) ||
+                    fecha.includes( termino )
                 );
-            });
+            } );
 
-        res.status(200).json(gatos);
-    } catch (error) {
-        console.error("Error al buscar gatos:", error);
+        res.status( 200 ).json( gatos );
+    } catch ( error )
+    {
+        console.error( "Error al buscar gatos:", error );
 
-        res.status(500).json({
+        res.status( 500 ).json( {
             mensaje: "Error al buscar los gatos.",
             error: error.message,
-        });
+        } );
+    }
+};
+
+export const guardarAuditoria = async ( {
+    accion,
+    gatoId,
+    valoresAnteriores = null,
+    valoresNuevos = null,
+    req,
+} ) => {
+    try
+    {
+        await db.collection( "auditoria_gatos" ).add( {
+            accion,
+            gatoId: gatoId || null,
+            fecha: new Date().toISOString(),
+            ip: req.auditoria?.ip || "desconocida",
+            userAgent: req.auditoria?.userAgent || "desconocido",
+            metodo: req.auditoria?.metodo || req.method,
+            ruta: req.auditoria?.ruta || req.originalUrl,
+            valoresAnteriores,
+            valoresNuevos,
+        } );
+    } catch ( err )
+    {
+        // No rompemos la operación principal si falla el log
+        console.error( "Error al guardar auditoría:", err.message );
     }
 };
