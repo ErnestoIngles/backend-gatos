@@ -1,2 +1,4 @@
 @baseUrl = http://localhost:3000
 GET {{baseUrl}}/gatos
+
+GET {{baseUrl}}/gatos/enviar-email

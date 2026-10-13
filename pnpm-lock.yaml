@@ -166,6 +166,9 @@ importers:
 
   .:
     dependencies:
+      '@emailjs/nodejs':
+        specifier: ^5.0.2
+        version: 5.0.2
       '@supabase/supabase-js':
         specifier: ^2.112.3
         version: 2.112.3(@opentelemetry/api@1.9.1)
@@ -189,6 +192,10 @@ importers:
         version: 2.2.0
 
 packages:
+
+  '@emailjs/nodejs@5.0.2':
+    resolution: {integrity: sha512-+BrO5rF0msaoEeSKxoa64weUkczd3fTXRCB8/EnKaIRzC8B1EyLDZfr9vYK5TNG/U3Eco9cpjMNnA1IlUBkmOw==}
+    engines: {node: '>=18.0.0'}
 
   '@fastify/busboy@3.2.0':
     resolution: {integrity: sha512-m9FVDXU3GT2ITSe0UaMA5rU3QkfC/UXtCU8y0gSN/GugTqtVldOBWIB5V6V3sbmenVZUIpU6f+mPEO2+m5iTaA==}
@@ -1224,6 +1231,8 @@ packages:
     engines: {node: '>=10'}
 
 snapshots:
+
+  '@emailjs/nodejs@5.0.2': {}
 
   '@fastify/busboy@3.2.0': {}
 
