@@ -1,3 +1,10 @@
+packages:
+  - '.'
+
+skills:
+  dirs:
+    - .agents/skills
+
 allowBuilds:
   '@firebase/util': true
   protobufjs: true
