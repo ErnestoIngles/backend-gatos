@@ -3,3 +3,9 @@ GET {{baseUrl}}/gatos
 
 ###
 GET {{baseUrl}}/gatos/enviar-email
+
+###
+GET {{baseUrl}}/estadisticas
+
+###
+GET {{baseUrl}}/estadisticas/excel

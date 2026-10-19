@@ -4,12 +4,14 @@ import gatoRoutes from "./routes/gato.routes.js";
 import climaRoutes from "./routes/clima.routes.js";
 import rateLimit from "express-rate-limit";
 import db from "./firebase.js";
+import estadisticasRoutes from "./routes/estadisticas.routes.js";
 
 const app = express();
 
 // Middlewares
 app.use( cors() );  //Permite peticiones desde cualquier origen
 app.use( express.json() );
+
 
 // Rate limit para gatos
 const limiterGatos = rateLimit( {
@@ -39,6 +41,7 @@ const limiterGatos = rateLimit( {
 // Aplicar el limitador ANTES de las rutas de gatos
 app.use( "/gato", limiterGatos );
 app.use( "/gatos", limiterGatos );
+app.use(estadisticasRoutes);
 
 // Rutas
 app.use( gatoRoutes );
