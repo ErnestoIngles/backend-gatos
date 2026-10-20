@@ -12,3 +12,6 @@ GET {{baseUrl}}/estadisticas/excel
 
 ###
 GET {{baseUrl}}/estadisticas/pdf
+
+###
+GET {{baseUrl}}/estadisticas/csv
