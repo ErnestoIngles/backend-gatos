@@ -9,3 +9,6 @@ GET {{baseUrl}}/estadisticas
 
 ###
 GET {{baseUrl}}/estadisticas/excel
+
+###
+GET {{baseUrl}}/estadisticas/pdf
